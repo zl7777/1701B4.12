@@ -49,7 +49,7 @@ gulp.task('image', () => {
 gulp.task('webserver', () => {
     gulp.src('.')
         .pipe(server({
-            port: 3000,
+            port: 8686,
             middleware: (req, res) => {
                 if (req.url === '/api') {
                     const result = JSON.stringify([1, 2, 3, 4, 5, 6])
@@ -59,30 +59,10 @@ gulp.task('webserver', () => {
         }))
 })
 
-// 8080的代理会访问3000下的
 
-//通过同源策略
-gulp.task('serverClient', () => {
-    connectServer.server({
-        name: 'connect server',
-        root: ['.'], //默认项目的根路径  可以是数组或者字符串
-        port: 8080, //服务端口        跨域
-        livereload: true,
-        fallback: './index.html', //默认打开的文件
-        middleware: (app) => { //定义接口的方法的回调
-            return [
-                //代里服务器proxy
-                proxy('/api', {
-                    target: 'http://localhost:3000',
-                    changeOrigin: true
-                })
-            ]
-        }
-    })
-})
 
 // 文件监听
-gulp.task('default', ['webserver', 'serverClient', 'css', 'script', 'renameFile', 'image'], () => {
+gulp.task('default', ['webserver', 'css', 'script', 'renameFile', 'image'], () => {
     //监听文件改变，自动编译
     gulp.watch('./css/*.css', ['css']);
 });

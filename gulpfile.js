@@ -3,34 +3,69 @@ const minifyScript = require('gulp-uglify');
 const minifyCss = require('gulp-clean-css');
 const rename = require('gulp-rename');
 const server = require('gulp-webserver');
-const connectServer = require('gulp-connect');
-const proxy = require('http-proxy-middleware');
-const minifyImage = require('gulp-image');
+// const connectServer = require('gulp-connect');
+// const proxy = require('http-proxy-middleware');
+const minifyImage = require('gulp-imagemin');
+const jsbabel = require('gulp-babel');
+const concat = require('gulp-concat');
+const sass = require('gulp-sass');
+
+
 
 
 //创建一个任务 .语法规则
 //gulp-task('taskname',callback(回调函数))
 //压缩js
-gulp.task('script', () => {
-    console.log('this is script');
-    gulp.src(['./src/js/*.js'])
-        .pipe(minifyScript())
+// gulp.task('script', () => {
+//     console.log('this is script');
+//     gulp.src(['./src/js/*.js'])
+
+//         .pipe(gulp.dest('build/js'))
+// })
+
+
+//开启服务
+gulp.task('webserver', () => {
+        return gulp.src('.')
+            .pipe(server({
+                port: 8686,
+                livereload: true,
+                open: true
+            }))
+    })
+    //打包时候的命令
+
+gulp.task('jsbabel', () => {
+    console.log('this is jsbabel');
+    return gulp.src('./src/js/*.js')
+        .pipe(jsbabel({ //转译es6-es5
+            presets: 'es2015'
+        }))
+        .pipe(minifyScript()) //压缩
+        .pipe(concat('main.js')) //合并
         .pipe(gulp.dest('build/js'))
 })
 
-
-//压缩css
+//压缩css 
 gulp.task('css', () => {
     console.log('this is css');
-    gulp.src(['./src/css/*.css'])
+    return gulp.src(['./src/css/*.css'])
         .pipe(minifyCss())
         .pipe(gulp.dest('build/css'))
 })
 
-//修改文件名
+//开发时候的命令
+//编译sass
+gulp.task('sass', () => {
+        console.log('this is scss');
+        return gulp.src('./src/css/sass/*.scss')
+            .pipe(sass()) //编译sass
+            .pipe(gulp.dest('src/css/sass'))
+    })
+    //修改文件名
 gulp.task('renameFile', () => {
     console.log('this is renameFile');
-    gulp.src('./index.html') //获取目录
+    return gulp.src('./index.html') //获取目录
         .pipe(rename('main.html')) //修改文件名字main 拓展名
         .pipe(gulp.dest('build')) //输出到build文件夹下
 })
@@ -39,30 +74,24 @@ gulp.task('renameFile', () => {
 //压缩图片
 gulp.task('image', () => {
     console.log('this is image');
-    gulp.src('./src/image/*.png')
+    return gulp.src('./src/image/*.png')
         .pipe(minifyImage())
         .pipe(gulp.dest('build/image'))
 })
 
 
-//开启服务
-gulp.task('webserver', () => {
-    gulp.src('.')
-        .pipe(server({
-            port: 8686,
-            middleware: (req, res) => {
-                if (req.url === '/api') {
-                    const result = JSON.stringify([1, 2, 3, 4, 5, 6])
-                    res.end(result)
-                }
-            }
-        }))
+
+
+
+
+// 文件监听变更
+gulp.task('watch', () => {
+    return gulp.watch('./src/css/sass/*.scss', gulp.series('sass', 'webserver'))
 })
 
 
+//开发---编译监听
+gulp.task('dev', gulp.series('sass', 'webserver', 'watch'))
 
-// 文件监听
-gulp.task('default', ['webserver', 'css', 'script', 'renameFile', 'image'], () => {
-    //监听文件改变，自动编译
-    gulp.watch('./css/*.css', ['css']);
-});
+//打包----上线,压缩
+gulp.task('build', gulp.parallel('jsbabel', 'sass'))

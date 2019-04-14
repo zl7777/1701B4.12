@@ -57,12 +57,13 @@ gulp.task('css', () => {
 //开发时候的命令
 //编译sass
 gulp.task('sass', () => {
-        console.log('this is scss');
-        return gulp.src('./src/css/sass/*.scss')
-            .pipe(sass()) //编译sass
-            .pipe(gulp.dest('src/css/sass'))
-    })
-    //修改文件名
+    console.log('this is scss');
+    return gulp.src('./src/css/sass/*.scss')
+        .pipe(sass()) //编译sass
+        .pipe(gulp.dest('build/css'))
+})
+
+//修改文件名
 gulp.task('renameFile', () => {
     console.log('this is renameFile');
     return gulp.src('./index.html') //获取目录
@@ -86,7 +87,9 @@ gulp.task('image', () => {
 
 // 文件监听变更
 gulp.task('watch', () => {
-    return gulp.watch('./src/css/sass/*.scss', gulp.series('sass', 'webserver'))
+    return gulp.watch('./src/css/sass/*.scss', gulp.series('sass', () => {
+        gulp.series('webserver')
+    }))
 })
 
 
